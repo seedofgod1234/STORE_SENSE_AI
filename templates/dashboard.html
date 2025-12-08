@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - StoreSense AI</title>
+</head>
+<body>
+    <h1>Welcome, {{ user }}!</h1>
+    <a href="{{ url_for('logout') }}">Logout</a>
+    
+    <h2>Notifications</h2>
+    {% if notifications %}
+        <ul>
+        {% for note in notifications %}
+            <li>{{ note }}</li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No notifications yet.</p>
+    {% endif %}
+</body>
+</html>
