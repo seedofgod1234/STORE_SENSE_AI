@@ -1,25 +1,16 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
-from flask_mail import Mail, Message
+import math
 
 app = Flask(__name__)
-app.secret_key = "supersecretkey123"  # Change if you want, keeps sessions safe
-
-# ----------------------------
-# Email Configuration (Disabled on Render for now)
-# ----------------------------
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'veal-sarafel@gmail.com'
-app.config['MAIL_PASSWORD'] = 'qdrmxezrxvpatjiu'
-
-mail = Mail(app)
+app.secret_key = "supersecretkey123"
 
 # ----------------------------
 # In-memory storage for demo
 # ----------------------------
 users = {}  # email: password
 notifications = []
+store_items = {}  # user_email: list of items
+
 
 # ----------------------------
 # Routes
@@ -27,7 +18,15 @@ notifications = []
 @app.route('/')
 def home():
     if 'user' in session:
-        return render_template('dashboard.html', user=session['user'], notifications=notifications)
+        user_email = session['user']
+        items = store_items.get(user_email, [])
+        # Generate low stock notifications
+        low_stock_notifications = []
+        for item in items:
+            if item['quantity'] <= item['low_threshold']:
+                low_stock_notifications.append(f"Low stock: {item['name']} (Qty: {item['quantity']})")
+        return render_template('dashboard.html', user=user_email, items=items,
+                               notifications=low_stock_notifications)
     return redirect(url_for('login'))
 
 
@@ -43,19 +42,8 @@ def register():
 
         users[email] = password
         session['user'] = email
-
-        # ----------------------------
-        # Email sending DISABLED on Render (to prevent worker timeout)
-        # ----------------------------
-        # try:
-        #     msg = Message("Welcome to StoreSense AI",
-        #                   sender=app.config['MAIL_USERNAME'],
-        #                   recipients=[email])
-        #     msg.body = f"Hello {email}, your StoreSense AI account is ready!"
-        #     mail.send(msg)
-        # except Exception as e:
-        #     print("Email failed:", e)
-
+        store_items[email] = []  # Initialize empty store items list
+        flash("Account created successfully!", "success")
         return redirect(url_for('home'))
 
     return render_template('register.html')
@@ -84,7 +72,44 @@ def logout():
 
 
 # ----------------------------
-# Run app (only used locally)
+# Add new store item
+# ----------------------------
+@app.route('/add_item', methods=['GET', 'POST'])
+def add_item():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        name = request.form['name']
+        quantity = int(request.form['quantity'])
+        price = float(request.form['price'])
+        avg_daily_sales = float(request.form['avg_daily_sales'])
+        low_threshold = int(request.form['low_threshold'])
+
+        # Calculate days left
+        days_left = math.ceil(quantity / avg_daily_sales) if avg_daily_sales > 0 else None
+        # Calculate reorder amount
+        reorder_amount = max(low_threshold * 2 - quantity, 0)
+
+        item = {
+            'name': name,
+            'quantity': quantity,
+            'price': price,
+            'avg_daily_sales': avg_daily_sales,
+            'low_threshold': low_threshold,
+            'days_left': days_left,
+            'reorder_amount': reorder_amount
+        }
+
+        store_items[session['user']].append(item)
+        flash(f"Item '{name}' added successfully!", "success")
+        return redirect(url_for('home'))
+
+    return render_template('add_item.html')
+
+
+# ----------------------------
+# Run app
 # ----------------------------
 if __name__ == '__main__':
     app.run(debug=True)

@@ -2,21 +2,105 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard - StoreSense AI</title>
+    <title>StoreSense AI Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(120deg, #4a90e2, #f5a623);
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: rgba(0,0,0,0.2);
+            padding: 20px;
+            color: white;
+            text-align: center;
+        }
+        .container {
+            padding: 20px;
+        }
+        .item-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .item-table th, .item-table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        .item-table th {
+            background-color: rgba(0,0,0,0.1);
+        }
+        .low-stock {
+            background-color: #ff4d4d;
+            color: white;
+            font-weight: bold;
+        }
+        .success {
+            color: green;
+        }
+        a.button {
+            display: inline-block;
+            padding: 10px 15px;
+            margin: 5px 0;
+            background-color: #333;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .notifications {
+            background-color: rgba(255,255,255,0.3);
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 <body>
+<header>
     <h1>Welcome, {{ user }}!</h1>
-    <a href="{{ url_for('logout') }}">Logout</a>
-    
-    <h2>Notifications</h2>
-    {% if notifications %}
-        <ul>
-        {% for note in notifications %}
-            <li>{{ note }}</li>
+    <a href="{{ url_for('logout') }}" class="button">Logout</a>
+</header>
+
+<div class="container">
+    <div class="notifications">
+        {% if notifications %}
+            <ul>
+            {% for note in notifications %}
+                <li>{{ note }}</li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <p>No notifications</p>
+        {% endif %}
+    </div>
+
+    <a href="{{ url_for('add_item') }}" class="button">Add New Item</a>
+
+    {% if items %}
+    <table class="item-table">
+        <tr>
+            <th>Item</th>
+            <th>Quantity</th>
+            <th>Avg Daily Sales</th>
+            <th>Days Left</th>
+            <th>Reorder Amount</th>
+        </tr>
+        {% for item in items %}
+        <tr class="{% if item.quantity <= item.low_threshold %}low-stock{% endif %}">
+            <td>{{ item.name }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ item.avg_daily_sales }}</td>
+            <td>{{ item.days_left }}</td>
+            <td>{{ item.reorder_amount }}</td>
+        </tr>
         {% endfor %}
-        </ul>
+    </table>
     {% else %}
-        <p>No notifications yet.</p>
+        <p>No items added yet.</p>
     {% endif %}
+</div>
 </body>
 </html>
