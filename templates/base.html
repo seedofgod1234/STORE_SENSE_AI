@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>StoreSenseAI</title>
+    <style>
+        body { font-family: Arial; margin:0; padding:0; background:#e6f0ff; }
+        .nav { background:#003366; color:#ffd700; padding:15px; }
+        .container { width:90%; margin:auto; padding:20px; }
+        input, select, button { padding:10px; margin:5px 0; }
+        table { width:100%; border-collapse:collapse; background:white; }
+        th, td { border:1px solid #ddd; padding:10px; text-align:center; }
+        th { background:#003366; color:#ffd700; }
+        .low { color:red; font-weight:bold; }
+        .ok { color:green; font-weight:bold; }
+        a { text-decoration:none; color:#003366; }
+        button { background:#003366; color:#ffd700; border:none; cursor:pointer; }
+        button:hover { opacity:0.8; }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <h2>StoreSenseAI Dashboard</h2>
+        {% if session.username %}
+        <p>Logged in as: {{ session.username }} | <a href="{{ url_for('logout') }}">Logout</a></p>
+        {% endif %}
+    </div>
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

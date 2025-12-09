@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Select Your Store Type</h2>
+<form method="POST">
+    <label>Store Type:</label><br>
+    <select name="store_type" required>
+        {% for st in store_types %}
+        <option value="{{ st }}">{{ st }}</option>
+        {% endfor %}
+    </select><br><br>
+    <button type="submit">Continue</button>
+</form>
+{% endblock %}

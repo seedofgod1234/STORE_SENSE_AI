@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Edit Item</h2>
+<form method="POST">
+    <label>Stock:</label><br>
+    <input type="number" name="stock" value="{{ item.stock }}" required><br>
+    <label>Used:</label><br>
+    <input type="number" name="used" value="{{ item.used }}" required><br>
+    <label>Price ($):</label><br>
+    <input type="number" name="price" value="{{ item.price }}" step="0.01" required><br>
+    <label>Expiry Date:</label><br>
+    <input type="date" name="expiry_date" value="{{ item.expiry_date }}" required><br><br>
+    <button type="submit">Save Changes</button>
+</form>
+{% endblock %}
