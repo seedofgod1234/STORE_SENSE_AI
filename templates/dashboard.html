@@ -6,13 +6,11 @@
 
     <h2 style="color:#0a1b3d; margin-bottom:15px;">Inventory Dashboard</h2>
 
-    <!-- Search Bar -->
     <div class="search-top">
         <input type="text" id="searchInput" placeholder="Search item...">
         <button onclick="searchItem()">Search</button>
     </div>
 
-    <!-- Inventory Value -->
     <div style="
         background:#0a1b3d;
         color:gold;
@@ -26,15 +24,13 @@
         Total Inventory Value: ${{ total_value }}
     </div>
 
-    <!-- Add New Item -->
     <a href="{{ url_for('add_item') }}">
         <button style="margin-bottom:15px;">Add New Item</button>
     </a>
 
-    <!-- Inventory Table -->
     <table style="width:100%; border-collapse:collapse;">
         <tr style="background:#0a1b3d; color:gold;">
-            <th style="padding:10px;">Name</th>
+            <th>Name</th>
             <th>Stock</th>
             <th>Used</th>
             <th>Expiry Date</th>
@@ -46,28 +42,23 @@
 
         {% for item in items %}
         <tr style="background:white; text-align:center; border-bottom:1px solid #ddd;">
-            <td style="padding:10px;">{{ item.name }}</td>
+            <td>{{ item.name }}</td>
             <td>{{ item.stock }}</td>
             <td>{{ item.used }}</td>
             <td>{{ item.expiry_date }}</td>
             <td>{{ item.days_left }}</td>
             <td>{{ item.avg_per_day }}</td>
-
             <td style="font-weight:bold; color:
                 {% if item.days_left <= 0 %} red
                 {% elif item.days_left <= 3 %} orange
                 {% else %} green
                 {% endif %}
             ">
-                {% if item.days_left <= 0 %}
-                    EXPIRED
-                {% elif item.days_left <= 3 %}
-                    LOW
-                {% else %}
-                    OK
+                {% if item.days_left <= 0 %} EXPIRED
+                {% elif item.days_left <= 3 %} LOW
+                {% else %} OK
                 {% endif %}
             </td>
-
             <td>
                 <a href="{{ url_for('edit_item', item_id=item.id) }}" style="color:#0a1b3d;">Edit</a> |
                 <a href="{{ url_for('delete_item', item_id=item.id) }}" style="color:red;">Delete</a>
@@ -82,16 +73,10 @@
 function searchItem() {
     let input = document.getElementById("searchInput").value.toLowerCase();
     let rows = document.querySelectorAll("table tr");
-
     rows.forEach((row, index) => {
-        if (index === 0) return; // Skip table header
-        let name = row.querySelector("td").innerText.toLowerCase();
-
-        if (name.includes(input)) {
-            row.style.display = "";
-        } else {
-            row.style.display = "none";
-        }
+        if (index === 0) return;
+        let name = row.querySelectorAll("td")[0]?.innerText.toLowerCase();
+        row.style.display = (name.includes(input)) ? "" : "none";
     });
 }
 </script>

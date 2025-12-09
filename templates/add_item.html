@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 
 {% block content %}
-
 <div class="panel">
 
     <h2 style="color:#0a1b3d; margin-bottom:15px;">Add New Item</h2>
@@ -20,15 +19,10 @@
         <input type="date" name="expiry_date" required>
 
         <label>Reorder Threshold</label>
-        <input type="number" name="threshold" placeholder="Optional" >
+        <input type="number" name="threshold" placeholder="Optional">
 
-        <br>
-
-        <button type="submit" style="width:100%; padding:12px; background:gold; color:#0a1b3d; font-weight:bold; border:none; border-radius:5px;">
-            Add Item
-        </button>
+        <button type="submit" style="width:100%; margin-top:10px;">Add Item</button>
     </form>
 
 </div>
-
 {% endblock %}
