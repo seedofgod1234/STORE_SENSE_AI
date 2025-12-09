@@ -1,32 +1,85 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>List Items - {{ store_type }}</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<style>
-body { background: #f0f4f8; }
-h1 { color: #003366; margin-top: 20px; }
-label { font-weight: bold; }
-.btn-save { background: #003366; color: gold; border: none; margin-top: 10px; }
-.btn-save:hover { background: gold; color: #003366; font-weight: bold; }
-</style>
-</head>
-<body>
-<div class="container">
-    <h1>Manage Items - {{ store_type }}</h1>
-    <form method="POST">
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="panel">
+
+    <h2 style="color:#0a1b3d; margin-bottom:15px;">Inventory List</h2>
+
+    <!-- Search Bar -->
+    <div class="search-top">
+        <input type="text" id="searchInput" placeholder="Search item...">
+        <button onclick="searchItem()">Search</button>
+    </div>
+
+    <!-- Add New Item -->
+    <a href="{{ url_for('add_item') }}">
+        <button style="margin-bottom:15px;">Add New Item</button>
+    </a>
+
+    <!-- Inventory Table -->
+    <table style="width:100%; border-collapse:collapse;">
+        <tr style="background:#0a1b3d; color:gold;">
+            <th style="padding:10px;">Name</th>
+            <th>Stock</th>
+            <th>Used</th>
+            <th>Expiry Date</th>
+            <th>Days Left</th>
+            <th>Avg/Day</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+
         {% for item in items %}
-        <div class="row mb-2">
-            <div class="col-md-3">{{ item.name }}</div>
-            <div class="col-md-3"><input type="number" class="form-control" name="quantity_{{ loop.index0 }}" value="{{ item.quantity }}"></div>
-            <div class="col-md-3"><input type="number" class="form-control" name="avg_daily_{{ loop.index0 }}" value="{{ item.avg_daily }}"></div>
-            <div class="col-md-3"><input type="number" class="form-control" name="threshold_{{ loop.index0 }}" value="{{ item.threshold }}"></div>
-        </div>
+        <tr style="background:white; text-align:center; border-bottom:1px solid #ddd;">
+            <td style="padding:10px;">{{ item.name }}</td>
+            <td>{{ item.stock }}</td>
+            <td>{{ item.used }}</td>
+            <td>{{ item.expiry_date }}</td>
+            <td>{{ item.days_left }}</td>
+            <td>{{ item.avg_per_day }}</td>
+
+            <td style="font-weight:bold; color:
+                {% if item.days_left <= 0 %} red
+                {% elif item.days_left <= 3 %} orange
+                {% else %} green
+                {% endif %}
+            ">
+                {% if item.days_left <= 0 %}
+                    EXPIRED
+                {% elif item.days_left <= 3 %}
+                    LOW
+                {% else %}
+                    OK
+                {% endif %}
+            </td>
+
+            <td>
+                <a href="{{ url_for('edit_item', item_id=item.id) }}" style="color:#0a1b3d;">Edit</a> |
+                <a href="{{ url_for('delete_item', item_id=item.id) }}" style="color:red;">Delete</a>
+            </td>
+        </tr>
         {% endfor %}
-        <button type="submit" class="btn btn-save">Save Items</button>
-    </form>
-    <a href="{{ url_for('dashboard') }}" class="btn btn-store mt-3">Back to Dashboard</a>
+    </table>
+
 </div>
-</body>
-</html>
+
+<script>
+function searchItem() {
+    let input = document.getElementById("searchInput").value.toLowerCase();
+    let rows = document.querySelectorAll("table tr");
+
+    rows.forEach((row, index) => {
+        if (index === 0) return;
+        let name = row.querySelectorAll("td")[0]?.innerText.toLowerCase();
+
+        if (name && name.includes(input)) {
+            row.style.display = "";
+        } else {
+            row.style.display = "none";
+        }
+    });
+}
+</script>
+
+{% endblock %}

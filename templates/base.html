@@ -1,31 +1,107 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StoreSenseAI</title>
+
     <style>
-        body { font-family: Arial; margin:0; padding:0; background:#e6f0ff; }
-        .nav { background:#003366; color:#ffd700; padding:15px; }
-        .container { width:90%; margin:auto; padding:20px; }
-        input, select, button { padding:10px; margin:5px 0; }
-        table { width:100%; border-collapse:collapse; background:white; }
-        th, td { border:1px solid #ddd; padding:10px; text-align:center; }
-        th { background:#003366; color:#ffd700; }
-        .low { color:red; font-weight:bold; }
-        .ok { color:green; font-weight:bold; }
-        a { text-decoration:none; color:#003366; }
-        button { background:#003366; color:#ffd700; border:none; cursor:pointer; }
-        button:hover { opacity:0.8; }
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+        }
+
+        .navbar {
+            background: #0a1b3d; /* Deep Blue */
+            color: gold;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 18px;
+        }
+
+        .navbar a {
+            color: gold;
+            text-decoration: none;
+            margin-left: 15px;
+            font-weight: bold;
+        }
+
+        .navbar a:hover {
+            color: white;
+        }
+
+        .container {
+            width: 95%;
+            margin: auto;
+            margin-top: 20px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            background: #0a1b3d;
+            color: gold;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: gold;
+            color: #0a1b3d;
+        }
+
+        .search-top {
+            background: #fff;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-top input {
+            flex: 1;
+            border: 1px solid #0a1b3d;
+        }
+
+        .panel {
+            background: white;
+            padding: 18px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 6px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
+
 <body>
-    <div class="nav">
-        <h2>StoreSenseAI Dashboard</h2>
-        {% if session.username %}
-        <p>Logged in as: {{ session.username }} | <a href="{{ url_for('logout') }}">Logout</a></p>
-        {% endif %}
+
+<div class="navbar">
+    <div>StoreSenseAI</div>
+    <div>
+        <a href="{{ url_for('dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('list_items') }}">Inventory</a>
+        <a href="{{ url_for('add_item') }}">Add Item</a>
+        <a href="{{ url_for('logout') }}">Logout</a>
     </div>
-    <div class="container">
-        {% block content %}{% endblock %}
-    </div>
+</div>
+
+<div class="container">
+    {% block content %}
+    {% endblock %}
+</div>
+
 </body>
 </html>

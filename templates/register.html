@@ -1,12 +1,140 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Register</h2>
-<form method="POST">
-    <label>Username:</label><br>
-    <input type="text" name="username" required><br>
-    <label>Password:</label><br>
-    <input type="password" name="password" required><br><br>
-    <button type="submit">Register</button>
-</form>
-<p>Already have an account? <a href="{{ url_for('login') }}">Login</a></p>
+
+<style>
+    .store-box {
+        background: #0a1b3d; /* deep blue */
+        color: gold;
+        padding: 20px;
+        border-radius: 10px;
+        width: 100%;
+        margin: auto;
+        box-shadow: 0px 0px 12px rgba(0,0,0,0.4);
+    }
+
+    .store-search {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 15px;
+        border-radius: 5px;
+        border: 1px solid gold;
+        background: white;
+    }
+
+    .store-list {
+        max-height: 220px;
+        overflow-y: auto;
+        background: white;
+        padding: 10px;
+        border-radius: 5px;
+        border: 2px solid gold;
+    }
+
+    .store-list div {
+        padding: 8px;
+        cursor: pointer;
+        border-bottom: 1px solid #ccc;
+    }
+
+    .store-list div:hover {
+        background: gold;
+        color: black;
+        font-weight: bold;
+    }
+
+</style>
+
+<div class="store-box">
+    <h2 style="text-align:center;">Register Your Store</h2>
+
+    <form method="POST">
+
+        <label>Owner Name</label>
+        <input type="text" name="username" required>
+
+        <label>Password</label>
+        <input type="password" name="password" required>
+
+        <label>Choose Your Store Type</label>
+
+        <!-- Search Bar -->
+        <input 
+            type="text" 
+            class="store-search" 
+            placeholder="Search store type..." 
+            onkeyup="filterStores()" 
+            id="storeSearch"
+        >
+
+        <!-- Store List Box -->
+        <div class="store-list" id="storeList">
+
+            <!-- FULL STORE CATEGORY LIST (100+ stores) -->
+            {% set stores = [
+                "Supermarket","Grocery Store","Food Stuff Shop","Mini Mart","Provision Store",
+                "Clothing Store","Boutique","Fashion Shop","Footwear Store","Shoe Store",
+                "Jewelry Store","Perfume Shop","Cosmetics Store","Beauty Supply Store",
+                "Phone Accessories Shop","Electronics Store","Computer Shop","Laptop Store",
+                "Furniture Store","Home Decor Shop","Lighting Shop","Interior Store",
+                "Pharmacy","Medical Supply Store","Health Store",
+                "Fruit Store","Vegetable Market","Frozen Food Store","Meat Shop",
+                "Kitchen Accessories Store","Cookware Shop","Restaurant Supplies",
+                "Wine Shop","Liquor Store","Beverage Shop","Drink Depot",
+                "Bookstore","Stationery Shop","Gift Shop","Toy Store",
+                "Sports Equipment Store","Gym Accessories Shop",
+                "Automobile Parts Store","Car Accessories Shop","Motorcycle Parts",
+                "Building Materials Store","Hardware Store","Plumbing Shop",
+                "Tailoring Shop","Textile Store","Fabric Market",
+                "Bag Store","Backpack Shop","Handbag Store","Luggage Shop",
+                "Laundry Supplies Store","Cleaning Supplies Store",
+                "Pet Shop","Animal Feed Store","Fish Store",
+                "Art Store","Craft Materials Store","Painting Shop",
+                "Solar Equipment Store","Generator Shop","Electrical Spare Parts",
+                "Baby Store","Children Shop","Maternity Store",
+                "Watches Store","Luxury Accessories Store",
+                "Agricultural Store","Farm Supply Shop",
+                "Gaming Store","Computer Accessories Shop",
+                "Car Wash Supply Store","Industrial Packaging Store",
+                "CCTV Shop","Security Gadgets Store",
+                "Water & Drink Pure Water Depot",
+                "Others"
+            ] %}
+
+            {% for store in stores %}
+            <div onclick="selectStore('{{ store }}')">{{ store }}</div>
+            {% endfor %}
+
+        </div>
+
+        <!-- Hidden input to store selected store -->
+        <input type="hidden" name="store_type" id="selectedStore" required>
+
+        <br><br>
+
+        <button type="submit" style="width:100%;padding:12px;background:gold;color:black;font-weight:bold;border:none;border-radius:5px;">
+            Register
+        </button>
+    </form>
+</div>
+
+<script>
+    function selectStore(name){
+        document.getElementById("selectedStore").value = name;
+        alert("Selected Store: " + name);
+    }
+
+    function filterStores(){
+        let input = document.getElementById("storeSearch").value.toLowerCase();
+        let items = document.querySelectorAll("#storeList div");
+
+        items.forEach(div => {
+            if(div.textContent.toLowerCase().includes(input)){
+                div.style.display = "block";
+            } else {
+                div.style.display = "none";
+            }
+        });
+    }
+</script>
+
 {% endblock %}
