@@ -1,13 +1,16 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+
 {% block content %}
-<h2>Select or Add Your Store</h2>
-<form method="POST">
-    <input type="text" name="store" list="stores" placeholder="Type your store" required>
-    <datalist id="stores">
-        {% for s in stores %}
-        <option value="{{ s }}"></option>
-        {% endfor %}
-    </datalist>
-    <button type="submit">Continue</button>
+<h2>Select Store</h2>
+<form method="POST" action="{{ url_for('dashboard') }}">
+    <div class="mb-3">
+        <label class="form-label">Choose your store</label>
+        <select name="store_id" class="form-select" required>
+            {% for store in stores %}
+            <option value="{{ store.id }}">{{ store.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit" class="btn btn-add">Go to Dashboard</button>
 </form>
 {% endblock %}
