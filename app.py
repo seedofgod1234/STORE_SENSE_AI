@@ -1,4 +1,3 @@
-# app.py
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.sql import func
@@ -6,14 +5,13 @@ import os
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key_here'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///storesenseai.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///store_sense.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 # ---------------------
 # Database Models
 # ---------------------
-
 class Store(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
@@ -32,7 +30,6 @@ class Item(db.Model):
 # ---------------------
 # Routes
 # ---------------------
-
 @app.route('/')
 def home():
     return redirect(url_for('dashboard'))
@@ -51,10 +48,8 @@ def dashboard():
         items_query = items_query.join(Store).filter(Store.name.ilike(f"%{search_store}%"))
 
     items = items_query.all()
-
     total_value = sum([item.price * item.stock for item in items])
 
-    # Prepare items with additional info
     item_data = []
     for item in items:
         days_to_sell_out = round(item.stock / item.avg_daily_sales, 2)
@@ -129,8 +124,6 @@ def delete_item(item_id):
 @app.before_first_request
 def create_tables():
     db.create_all()
-
-    # Add sample stores if none exist
     if Store.query.count() == 0:
         store1 = Store(name="Main Street Store")
         store2 = Store(name="Downtown Shop")
@@ -138,7 +131,6 @@ def create_tables():
         db.session.add_all([store1, store2, store3])
         db.session.commit()
 
-    # Add sample items if none exist
     if Item.query.count() == 0:
         sample_items = [
             Item(name="Laptop", category="Electronics", price=1000, stock=10, avg_daily_sales=2, threshold=3, store_id=1),
@@ -151,5 +143,6 @@ def create_tables():
 # ---------------------
 # Run Server
 # ---------------------
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
