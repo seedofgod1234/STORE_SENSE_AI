@@ -1,296 +1,206 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
-from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
-import uuid
+from flask import Flask, render_template, request, redirect, url_for, session
 
 app = Flask(__name__)
 app.secret_key = "vealsarafel!storesenseAI$2025#fullpowerkey1234567890"
 
-# --------------------
-# In-memory stores
-# --------------------
-# users: email -> {id, name, password_hash, store_type}
+# In-memory storage (replace with database later)
 users = {}
-
-# master_store_types: list of store type strings (editable by users adding custom)
-master_store_types = [
-    "Supermarket","Grocery Store","Bakery","Butchery","Fruit & Vegetable","Drinks & Wine",
-    "Clothing Store","Boutique","Shoe Store","Jewelry Store","Perfume Store","Cosmetics Store",
-    "Electronics","Mobile Shop","Laptop Store","Appliances Store","Camera Store",
-    "Furniture Store","Kitchen Accessories","Home Decor","Lighting Store",
-    "Pharmacy","Health & Wellness","Supplements Store",
-    "Baby & Kids","Toy Store","School Supplies",
-    "Books & Stationery","Gift Shop","Pet Store","Hardware","Agriculture Store",
-    "Automotive","Wines & Spirits","Sports Equipment","Toys & Games","Other"
+inventory = {}
+store_types = [
+    "Food & Grocery", "Clothing", "Jewelry", "Shoes", "Bags",
+    "Cosmetics", "Perfumes", "Fruits & Vegetables", "Kitchen Accessories", "Wines & Beverages"
 ]
 
-# inventory: list of items
-# each item: {id, owner_id, store_type, name, stock, used, unit_price, expiry_date (YYYY-MM-DD), avg_per_day, threshold (optional)}
-inventory = []
+# =========================
+# HOME ROUTE
+# =========================
+@app.route('/')
+def home():
+    if 'username' in session:
+        return redirect(url_for('dashboard'))
+    return redirect(url_for('login'))
 
-# helper
-def get_user_by_email(email):
-    return users.get(email)
-
-def get_current_user():
-    uid = session.get("user_id")
-    if not uid:
-        return None
-    for u in users.values():
-        if u["id"] == uid:
-            return u
-    return None
-
-def days_left(expiry_date_str):
-    try:
-        exp = datetime.strptime(expiry_date_str, "%Y-%m-%d").date()
-        return (exp - datetime.now().date()).days
-    except Exception:
-        return None
-
-# --------------------
-# Routes
-# --------------------
-
-@app.route("/")
-def index():
-    # if logged in and has store_type -> go to dashboard, else go to login
-    user = get_current_user()
-    if user:
-        if user.get("store_type"):
-            return redirect(url_for("dashboard"))
-        return redirect(url_for("select_store"))
-    return redirect(url_for("login"))
-
-# Register
-@app.route("/register", methods=["GET","POST"])
+# =========================
+# REGISTER ROUTE
+# =========================
+@app.route('/register', methods=['GET', 'POST'])
 def register():
-    if request.method == "POST":
-        name = request.form.get("name","").strip()
-        email = request.form.get("email","").strip().lower()
-        password = request.form.get("password","")
-        if not email or not password:
-            flash("Please fill email and password","error")
-            return redirect(url_for("register"))
-        if email in users:
-            flash("Email already registered","error")
-            return redirect(url_for("register"))
-        users[email] = {
-            "id": str(uuid.uuid4()),
-            "name": name or email.split("@")[0],
-            "email": email,
-            "password_hash": generate_password_hash(password),
-            "store_type": None
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        if username in users:
+            return "Username already exists!"
+        
+        users[username] = {
+            'password': password,
+            'store': None
         }
-        session["user_id"] = users[email]["id"]
-        return redirect(url_for("select_store"))
-    return render_template("register.html", store_types=master_store_types)
+        session['username'] = username
+        return redirect(url_for('select_store'))
 
-# Login
-@app.route("/login", methods=["GET","POST"])
+    return render_template('register.html')
+
+# =========================
+# LOGIN ROUTE
+# =========================
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == "POST":
-        email = request.form.get("email","").strip().lower()
-        password = request.form.get("password","")
-        user = get_user_by_email(email)
-        if user and check_password_hash(user["password_hash"], password):
-            session["user_id"] = user["id"]
-            if user.get("store_type"):
-                return redirect(url_for("dashboard"))
-            return redirect(url_for("select_store"))
-        flash("Invalid credentials","error")
-        return redirect(url_for("login"))
-    return render_template("login.html")
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
 
-# Logout
-@app.route("/logout")
+        if username in users and users[username]['password'] == password:
+            session['username'] = username
+            if users[username]['store']:
+                return redirect(url_for('dashboard'))
+            else:
+                return redirect(url_for('select_store'))
+        else:
+            return "Invalid credentials!"
+    return render_template('login.html')
+
+# =========================
+# LOGOUT
+# =========================
+@app.route('/logout')
 def logout():
     session.clear()
-    flash("Logged out","success")
-    return redirect(url_for("login"))
+    return redirect(url_for('login'))
 
-# Select store (required before dashboard)
-@app.route("/select_store", methods=["GET","POST"])
+# =========================
+# SELECT STORE ROUTE
+# =========================
+@app.route('/select_store', methods=['GET', 'POST'])
 def select_store():
-    user = get_current_user()
-    if not user:
-        return redirect(url_for("login"))
+    if 'username' not in session:
+        return redirect(url_for('login'))
 
-    if request.method == "POST":
-        chosen = request.form.get("store_type","").strip()
-        custom = request.form.get("custom_store","").strip()
-        # if custom provided, add to master list (avoid duplicates)
-        if custom:
-            if custom not in master_store_types:
-                master_store_types.append(custom)
-            chosen = custom
-        if not chosen:
-            flash("Please choose or add a store type","error")
-            return redirect(url_for("select_store"))
-        # set user's store_type
-        user["store_type"] = chosen
-        flash(f"Store set to {chosen}","success")
-        return redirect(url_for("dashboard"))
+    if request.method == 'POST':
+        selected_store = request.form['store_name'].strip()
+        if selected_store not in store_types:
+            store_types.append(selected_store)  # allow custom store
 
-    return render_template("select_store.html", store_types=master_store_types, current_store=user.get("store_type"))
+        users[session['username']]['store'] = selected_store
+        session['store'] = selected_store
+        return redirect(url_for('dashboard'))
 
-# Change store (from dashboard)
-@app.route("/change_store")
-def change_store():
-    user = get_current_user()
-    if not user:
-        return redirect(url_for("login"))
-    # clear store_type and send to selection page
-    user["store_type"] = None
-    flash("Choose a new store type","info")
-    return redirect(url_for("select_store"))
+    return render_template('select_store.html', store_types=store_types)
 
-# Dashboard
-@app.route("/dashboard")
+# =========================
+# DASHBOARD
+# =========================
+@app.route('/dashboard')
 def dashboard():
-    user = get_current_user()
-    if not user:
-        return redirect(url_for("login"))
-    store = user.get("store_type")
-    if not store:
-        return redirect(url_for("select_store"))
+    if 'username' not in session:
+        return redirect(url_for('login'))
 
-    search_q = request.args.get("search","").strip().lower()
-    # user-specific items in that store
-    user_items = [it for it in inventory if it["owner_id"] == user["id"] and it["store_type"] == store]
-    if search_q:
-        user_items = [it for it in user_items if search_q in it["name"].lower()]
+    store = session.get('store')
+    store_inventory = inventory.get(store, [])
+    search_query = request.args.get('search', '').lower()
+    
+    if search_query:
+        filtered_items = [item for item in store_inventory if search_query in item['name'].lower()]
+    else:
+        filtered_items = store_inventory
 
-    # compute days_left, avg/day, threshold flag, inventory value
-    total_value = 0.0
-    for it in user_items:
-        it["days_left"] = days_left(it.get("expiry_date","")) if it.get("expiry_date") else None
-        # avg per day fallback
-        it["avg_per_day"] = round(it.get("avg_per_day", 0) , 2)
-        it["threshold_flag"] = (it["stock"] <= it.get("threshold", 0)) if it.get("threshold") is not None else False
-        total_value += it.get("stock",0) * float(it.get("unit_price",0) or 0)
-    total_value = round(total_value,2)
+    # Calculate inventory value (simple example: stock * avg_per_day)
+    inventory_value = sum(item['stock'] * item['avg_per_day'] for item in store_inventory)
 
-    return render_template("dashboard.html", items=user_items, total_value=total_value, store=store)
+    return render_template('dashboard.html',
+                           items=filtered_items,
+                           store=store,
+                           inventory_value=inventory_value)
 
-# List items/manage (same as dashboard but editable list)
-@app.route("/list_items", methods=["GET","POST"])
-def list_items():
-    user = get_current_user()
-    if not user:
-        return redirect(url_for("login"))
-    store = user.get("store_type")
-    if not store:
-        return redirect(url_for("select_store"))
-
-    if request.method == "POST":
-        # Bulk update quantities/avg/threshold if present
-        # We'll iterate items belonging to user & store and update by index
-        for i, it in enumerate([it for it in inventory if it["owner_id"]==user["id"] and it["store_type"]==store]):
-            stock = request.form.get(f"stock_{i}")
-            avg = request.form.get(f"avg_{i}")
-            threshold = request.form.get(f"threshold_{i}")
-            if stock is not None:
-                try:
-                    it["stock"] = int(stock)
-                except:
-                    pass
-            if avg is not None:
-                try:
-                    it["avg_per_day"] = float(avg)
-                except:
-                    pass
-            if threshold is not None:
-                try:
-                    it["threshold"] = int(threshold)
-                except:
-                    pass
-        flash("Items updated","success")
-        return redirect(url_for("dashboard"))
-
-    search_q = request.args.get("search","").strip().lower()
-    user_items = [it for it in inventory if it["owner_id"]==user["id"] and it["store_type"]==store]
-    if search_q:
-        user_items = [it for it in user_items if search_q in it["name"].lower()]
-    # compute some extra fields
-    for it in user_items:
-        it["days_left"] = days_left(it.get("expiry_date","")) if it.get("expiry_date") else None
-        it["avg_per_day"] = round(it.get("avg_per_day",0),2)
-    return render_template("list_items.html", items=user_items, store=store, search_query=request.args.get("search",""))
-
-# Add item
-@app.route("/add_item", methods=["GET","POST"])
+# =========================
+# ADD ITEM
+# =========================
+@app.route('/add_item', methods=['GET', 'POST'])
 def add_item():
-    user = get_current_user()
-    if not user:
-        return redirect(url_for("login"))
-    store = user.get("store_type")
-    if not store:
-        return redirect(url_for("select_store"))
+    if 'username' not in session:
+        return redirect(url_for('login'))
 
-    if request.method == "POST":
-        name = request.form.get("name","").strip()
-        stock = int(request.form.get("stock","0") or 0)
-        avg = float(request.form.get("avg_per_day","0") or 0)
-        unit_price = float(request.form.get("unit_price","0") or 0)
-        expiry = request.form.get("expiry_date","").strip()
-        threshold = request.form.get("threshold")
-        threshold = int(threshold) if threshold else None
+    store = session.get('store')
+    if store not in inventory:
+        inventory[store] = []
 
-        item = {
-            "id": str(uuid.uuid4()),
-            "owner_id": user["id"],
-            "store_type": store,
-            "name": name,
-            "stock": stock,
-            "used": 0,
-            "unit_price": unit_price,
-            "expiry_date": expiry,
-            "avg_per_day": avg,
-            "threshold": threshold
-        }
-        inventory.append(item)
-        flash("Item added","success")
-        return redirect(url_for("dashboard"))
-    return render_template("add_item.html", store=store)
+    if request.method == 'POST':
+        try:
+            name = request.form['name']
+            stock = int(request.form['stock'])
+            used = int(request.form['used'])
+            expiry_date = request.form['expiry_date']
+            threshold = int(request.form['threshold'])
+            avg_per_day = float(request.form['avg_per_day'])
+            
+            days_left = stock // (avg_per_day if avg_per_day > 0 else 1)
 
-# Edit item
-@app.route("/edit_item/<item_id>", methods=["GET","POST"])
-def edit_item(item_id):
-    user = get_current_user()
-    if not user:
-        return redirect(url_for("login"))
-    item = next((it for it in inventory if it["id"]==item_id and it["owner_id"]==user["id"]), None)
-    if not item:
-        flash("Item not found","error")
-        return redirect(url_for("dashboard"))
+            inventory[store].append({
+                'name': name,
+                'stock': stock,
+                'used': used,
+                'expiry_date': expiry_date,
+                'threshold': threshold,
+                'avg_per_day': avg_per_day,
+                'days_left': days_left
+            })
 
-    if request.method == "POST":
-        item["name"] = request.form.get("name", item["name"])
-        item["stock"] = int(request.form.get("stock", item["stock"]) or item["stock"])
-        item["avg_per_day"] = float(request.form.get("avg_per_day", item.get("avg_per_day", 0)) or item.get("avg_per_day",0))
-        item["unit_price"] = float(request.form.get("unit_price", item.get("unit_price",0)) or item.get("unit_price",0))
-        item["expiry_date"] = request.form.get("expiry_date", item.get("expiry_date",""))
-        threshold = request.form.get("threshold")
-        item["threshold"] = int(threshold) if threshold else None
-        flash("Item updated","success")
-        return redirect(url_for("dashboard"))
+            return redirect(url_for('dashboard'))
+        except Exception as e:
+            return f"Error adding item: {e}", 400
 
-    return render_template("edit_item.html", item=item)
+    return render_template('add_item.html', store=store)
 
-# Delete item
-@app.route("/delete_item/<item_id>", methods=["GET"])
-def delete_item(item_id):
-    user = get_current_user()
-    if not user:
-        return redirect(url_for("login"))
-    global inventory
-    inventory = [it for it in inventory if not (it["id"]==item_id and it["owner_id"]==user["id"])]
-    flash("Item deleted","success")
-    return redirect(url_for("dashboard"))
+# =========================
+# EDIT ITEM
+# =========================
+@app.route('/edit_item/<int:item_index>', methods=['GET', 'POST'])
+def edit_item(item_index):
+    if 'username' not in session:
+        return redirect(url_for('login'))
 
-# --------------------
-# Run
-# --------------------
-if __name__ == "__main__":
+    store = session.get('store')
+    store_inventory = inventory.get(store, [])
+
+    if item_index < 0 or item_index >= len(store_inventory):
+        return "Item not found", 404
+
+    item = store_inventory[item_index]
+
+    if request.method == 'POST':
+        try:
+            item['name'] = request.form['name']
+            item['stock'] = int(request.form['stock'])
+            item['used'] = int(request.form['used'])
+            item['expiry_date'] = request.form['expiry_date']
+            item['threshold'] = int(request.form['threshold'])
+            item['avg_per_day'] = float(request.form['avg_per_day'])
+            item['days_left'] = item['stock'] // (item['avg_per_day'] if item['avg_per_day'] > 0 else 1)
+            return redirect(url_for('dashboard'))
+        except Exception as e:
+            return f"Error editing item: {e}", 400
+
+    return render_template('edit_item.html', item=item, item_index=item_index, store=store)
+
+# =========================
+# DELETE ITEM
+# =========================
+@app.route('/delete_item/<int:item_index>', methods=['POST'])
+def delete_item(item_index):
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    store = session.get('store')
+    store_inventory = inventory.get(store, [])
+
+    if 0 <= item_index < len(store_inventory):
+        store_inventory.pop(item_index)
+        inventory[store] = store_inventory
+
+    return redirect(url_for('dashboard'))
+
+# =========================
+# RUN APP
+# =========================
+if __name__ == '__main__':
     app.run(debug=True)
