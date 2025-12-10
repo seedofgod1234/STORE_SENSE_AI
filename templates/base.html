@@ -1,106 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StoreSenseAI</title>
-
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f4f7fb;
-        }
-
-        .navbar {
-            background: #0a1b3d; /* Deep Blue */
-            color: gold;
-            padding: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 18px;
-        }
-
-        .navbar a {
-            color: gold;
-            text-decoration: none;
-            margin-left: 15px;
-            font-weight: bold;
-        }
-
-        .navbar a:hover {
-            color: white;
-        }
-
-        .container {
-            width: 95%;
-            margin: auto;
-            margin-top: 20px;
-        }
-
-        input, select {
-            width: 100%;
-            padding: 12px;
-            margin-top: 10px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
-
-        button {
-            background: #0a1b3d;
-            color: gold;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        button:hover {
-            background: gold;
-            color: #0a1b3d;
-        }
-
-        .search-top {
-            background: #fff;
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            display: flex;
-            gap: 10px;
-        }
-
-        .search-top input {
-            flex: 1;
-            border: 1px solid #0a1b3d;
-        }
-
-        .panel {
-            background: white;
-            padding: 18px;
-            border-radius: 10px;
-            box-shadow: 0px 0px 6px rgba(0,0,0,0.1);
-        }
-    </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>StoreSenseAI</title>
+<style>
+    body { font-family: Arial, sans-serif; background:#f4f7fb; margin:0; }
+    .nav { background: linear-gradient(90deg,#0a1b3d,#123059); color: gold; padding:12px 18px; display:flex; justify-content:space-between; align-items:center; }
+    .nav a { color: gold; margin-left:12px; text-decoration:none; font-weight:bold; }
+    .container { width:95%; margin:auto; padding:18px; }
+    .panel { background:white; padding:18px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.06); }
+    button { background:#0a1b3d; color:gold; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; }
+    button:hover { opacity:0.9; }
+    input, select { padding:10px; border-radius:6px; border:1px solid #ccc; width:100%; box-sizing:border-box; }
+    table { width:100%; border-collapse:collapse; margin-top:12px; }
+    th { background:#0a1b3d; color:gold; padding:10px; text-align:center; }
+    td { padding:10px; text-align:center; border-bottom:1px solid #eee; }
+    .low { color:orange; font-weight:bold; }
+    .expired { color:red; font-weight:bold; }
+    .ok { color:green; font-weight:bold; }
+    .small { font-size:13px; color:#666; }
+    .top-controls { display:flex; gap:8px; align-items:center; margin-bottom:12px; }
+    .right { margin-left:auto; }
+</style>
 </head>
-
 <body>
-
-<div class="navbar">
-    <div>StoreSenseAI</div>
+<div class="nav">
+    <div><strong>StoreSenseAI</strong></div>
     <div>
-        <a href="{{ url_for('dashboard') }}">Dashboard</a>
-        <a href="{{ url_for('list_items') }}">Inventory</a>
-        <a href="{{ url_for('add_item') }}">Add Item</a>
-        <a href="{{ url_for('logout') }}">Logout</a>
+        {% if session.user_id %}
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('list_items') }}">Inventory</a>
+            <a href="{{ url_for('add_item') }}">Add Item</a>
+            <a href="{{ url_for('change_store') }}">Change Store</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        {% else %}
+            <a href="{{ url_for('register') }}">Register</a>
+            <a href="{{ url_for('login') }}">Login</a>
+        {% endif %}
     </div>
 </div>
 
 <div class="container">
-    {% block content %}
-    {% endblock %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div style="margin-bottom:12px;">
+          {% for cat, msg in messages %}
+            <div class="panel small" style="background: {% if cat=='error' %}#ffe6e6{% elif cat=='success' %}#e9f7ef{% else %}#fff3cd{% endif %}; border-left:6px solid {% if cat=='error' %}#ff4d4d{% elif cat=='success' %}#28a745{% else %}#ffc107{% endif %}; margin-bottom:6px;">
+              {{ msg }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
 </div>
 
 </body>

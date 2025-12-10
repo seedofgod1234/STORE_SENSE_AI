@@ -1,13 +1,61 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Select Your Store Type</h2>
-<form method="POST">
-    <label>Store Type:</label><br>
-    <select name="store_type" required>
-        {% for st in store_types %}
-        <option value="{{ st }}">{{ st }}</option>
-        {% endfor %}
-    </select><br><br>
-    <button type="submit">Continue</button>
-</form>
+<div class="panel">
+  <h2 style="color:#0a1b3d;">Choose your store type</h2>
+
+  <p class="small">Search the list or add a custom store type if yours isn't listed. After choosing you'll go to your dashboard.</p>
+
+  <input type="text" id="storeSearch" placeholder="Search store types..." onkeyup="filterStores()" style="margin-bottom:10px;">
+
+  <div style="display:flex; gap:12px;">
+    <div style="flex:1;">
+      <div id="storeList" style="max-height:260px; overflow:auto; border:1px solid #eee; padding:8px; border-radius:6px; background:white;">
+        <form id="chooseForm" method="POST" action="{{ url_for('select_store') }}">
+          <input type="hidden" name="store_type" id="selectedStoreInput" required>
+          {% for st in store_types %}
+            <div style="padding:8px; border-bottom:1px solid #f1f1f1; cursor:pointer;" onclick="selectStore('{{ st|e }}')">
+              {{ st }}
+            </div>
+          {% endfor %}
+        </form>
+      </div>
+    </div>
+
+    <div style="width:320px;">
+      <div style="background:#fff; padding:12px; border-radius:6px; border:1px solid #eee;">
+        <h4 style="margin-top:0;">Add custom store</h4>
+        <form method="POST" action="{{ url_for('select_store') }}">
+          <input type="text" name="custom_store" placeholder="Type your store name" required>
+          <br><br>
+          <button type="submit">Add & Use This Store</button>
+        </form>
+        <p class="small" style="margin-top:10px;">Selected store: <strong id="selectedSpan">{{ current_store or 'None' }}</strong></p>
+        <br>
+        <button type="button" onclick="submitChosen()" style="background:gold;color:#0a1b3d;">Confirm selected store</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function selectStore(name){
+  document.getElementById('selectedStoreInput').value = name;
+  document.getElementById('selectedSpan').innerText = name;
+}
+function submitChosen(){
+  const v = document.getElementById('selectedStoreInput').value;
+  if(!v){
+    alert('Select a store first or add a custom one.');
+    return;
+  }
+  document.getElementById('chooseForm').submit();
+}
+function filterStores(){
+  const q = document.getElementById('storeSearch').value.toLowerCase();
+  const nodes = document.querySelectorAll('#storeList div');
+  nodes.forEach(n=>{
+    if(n.innerText.toLowerCase().includes(q)) n.style.display='block'; else n.style.display='none';
+  });
+}
+</script>
 {% endblock %}
