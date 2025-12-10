@@ -5,7 +5,10 @@ import uuid
 app = Flask(__name__)
 app.secret_key = "vealsarafel!storesenseAI$2025#fullpowerkey1234567890"
 
-# In-memory storage for demo (replace with DB for production)
+# -------------------------
+# In-memory storage for demo
+# Replace with a database for production
+# -------------------------
 users = {}
 items = []
 
@@ -18,7 +21,14 @@ store_types = [
 ]
 
 # -------------------------
-# User Authentication Routes
+# Index route redirects to login
+# -------------------------
+@app.route('/')
+def index():
+    return redirect(url_for('login'))
+
+# -------------------------
+# User Authentication
 # -------------------------
 @app.route('/register', methods=['GET','POST'])
 def register():
@@ -64,7 +74,7 @@ def logout():
     return redirect(url_for('login'))
 
 # -------------------------
-# Dashboard & Items Routes
+# Dashboard & Items
 # -------------------------
 def get_current_user():
     uid = session.get('user_id')
