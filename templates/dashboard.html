@@ -1,70 +1,27 @@
 {% extends "base.html" %}
-
-{% block title %}Dashboard{% endblock %}
-
 {% block content %}
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="text-primary">StoreSenseAI Dashboard</h2>
-        <div>
-            <span class="badge bg-warning text-dark">Inventory Value: ${{ inventory_value }}</span>
-            <a href="{{ url_for('select_store') }}" class="btn btn-info ms-2">Change Store</a>
-            <a href="{{ url_for('logout') }}" class="btn btn-secondary ms-2">Logout</a>
-        </div>
-    </div>
+<h2>{{ store }} Inventory Dashboard</h2>
+<p>Total Inventory Value: ${{ total_value }}</p>
 
-    <!-- Search Bar -->
-    <form method="GET" action="{{ url_for('dashboard') }}" class="mb-3">
-        <div class="input-group">
-            <input type="text" class="form-control" name="search" placeholder="Search item..." value="{{ request.args.get('search', '') }}">
-            <button class="btn btn-primary" type="submit">Search</button>
-        </div>
-    </form>
+<form method="GET">
+    <input type="text" name="search" placeholder="Search item..." value="{{ request.args.get('search','') }}">
+    <button type="submit">Search</button>
+</form>
 
-    <a href="{{ url_for('add_item') }}" class="btn btn-success mb-3">Add New Item</a>
-
-    <table class="table table-striped table-bordered">
-        <thead class="table-primary">
-            <tr>
-                <th>Name</th>
-                <th>Stock</th>
-                <th>Used</th>
-                <th>Expiry Date</th>
-                <th>Days Left</th>
-                <th>Avg/Day</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in items %}
-                <tr>
-                    <td>{{ item.name }}</td>
-                    <td>{{ item.stock }}</td>
-                    <td>{{ item.used }}</td>
-                    <td>{{ item.expiry_date }}</td>
-                    <td>{{ item.days_left }}</td>
-                    <td>{{ item.avg_per_day }}</td>
-                    <td>
-                        {% if item.stock <= item.threshold %}
-                            <span class="badge bg-danger">Low</span>
-                        {% else %}
-                            <span class="badge bg-success">OK</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <a href="{{ url_for('edit_item', item_name=item.name) }}" class="btn btn-warning btn-sm">Edit</a>
-                        <form method="POST" action="{{ url_for('delete_item', item_name=item.name) }}" style="display:inline;">
-                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                        </form>
-                    </td>
-                </tr>
-            {% else %}
-                <tr>
-                    <td colspan="8" class="text-center">No items found</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+<table border="1" style="width:100%; border-collapse: collapse;">
+<tr>
+    <th>Name</th><th>Stock</th><th>Price</th><th>Actions</th>
+</tr>
+{% for item in inventory %}
+<tr>
+    <td>{{ item.name }}</td>
+    <td>{{ item.stock }}</td>
+    <td>${{ item.price }}</td>
+    <td>
+        <a href="{{ url_for('edit_item', item_index=loop.index0) }}">Edit</a> | 
+        <a href="{{ url_for('delete_item', item_index=loop.index0) }}">Delete</a>
+    </td>
+</tr>
+{% endfor %}
+</table>
 {% endblock %}

@@ -1,61 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>StoreSenseAI</title>
-<style>
-    body { font-family: Arial, sans-serif; background:#f4f7fb; margin:0; }
-    .nav { background: linear-gradient(90deg,#0a1b3d,#123059); color: gold; padding:12px 18px; display:flex; justify-content:space-between; align-items:center; }
-    .nav a { color: gold; margin-left:12px; text-decoration:none; font-weight:bold; }
-    .container { width:95%; margin:auto; padding:18px; }
-    .panel { background:white; padding:18px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.06); }
-    button { background:#0a1b3d; color:gold; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; }
-    button:hover { opacity:0.9; }
-    input, select { padding:10px; border-radius:6px; border:1px solid #ccc; width:100%; box-sizing:border-box; }
-    table { width:100%; border-collapse:collapse; margin-top:12px; }
-    th { background:#0a1b3d; color:gold; padding:10px; text-align:center; }
-    td { padding:10px; text-align:center; border-bottom:1px solid #eee; }
-    .low { color:orange; font-weight:bold; }
-    .expired { color:red; font-weight:bold; }
-    .ok { color:green; font-weight:bold; }
-    .small { font-size:13px; color:#666; }
-    .top-controls { display:flex; gap:8px; align-items:center; margin-bottom:12px; }
-    .right { margin-left:auto; }
-</style>
+    <meta charset="UTF-8">
+    <title>StoreSenseAI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-<div class="nav">
-    <div><strong>StoreSenseAI</strong></div>
-    <div>
-        {% if session.user_id %}
-            <a href="{{ url_for('dashboard') }}">Dashboard</a>
-            <a href="{{ url_for('list_items') }}">Inventory</a>
-            <a href="{{ url_for('add_item') }}">Add Item</a>
-            <a href="{{ url_for('change_store') }}">Change Store</a>
-            <a href="{{ url_for('logout') }}">Logout</a>
-        {% else %}
-            <a href="{{ url_for('register') }}">Register</a>
-            <a href="{{ url_for('login') }}">Login</a>
-        {% endif %}
+    <nav style="background: #0a3d62; padding: 10px; color: gold;">
+        <a href="{{ url_for('dashboard') }}" style="color: gold; margin-right: 10px;">Dashboard</a>
+        <a href="{{ url_for('add_item') }}" style="color: gold; margin-right: 10px;">Add Item</a>
+        <a href="{{ url_for('select_store') }}" style="color: gold; margin-right: 10px;">Change Store Type</a>
+        <a href="{{ url_for('logout') }}" style="color: gold;">Logout</a>
+    </nav>
+    <div class="container">
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <ul style="color:red;">
+            {% for message in messages %}
+              <li>{{ message }}</li>
+            {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
     </div>
-</div>
-
-<div class="container">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <div style="margin-bottom:12px;">
-          {% for cat, msg in messages %}
-            <div class="panel small" style="background: {% if cat=='error' %}#ffe6e6{% elif cat=='success' %}#e9f7ef{% else %}#fff3cd{% endif %}; border-left:6px solid {% if cat=='error' %}#ff4d4d{% elif cat=='success' %}#28a745{% else %}#ffc107{% endif %}; margin-bottom:6px;">
-              {{ msg }}
-            </div>
-          {% endfor %}
-        </div>
-      {% endif %}
-    {% endwith %}
-
-    {% block content %}{% endblock %}
-</div>
-
 </body>
 </html>

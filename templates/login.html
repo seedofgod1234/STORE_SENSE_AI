@@ -1,18 +1,12 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="panel">
-  <h2 style="color:#0a1b3d;margin-bottom:8px;">Login</h2>
-  <form method="POST" action="{{ url_for('login') }}">
-    <label>Email</label><br>
-    <input type="email" name="email" required><br><br>
-
-    <label>Password</label><br>
+<h2>Login</h2>
+<form method="POST">
+    <label>Username:</label><br>
+    <input type="text" name="username" required><br>
+    <label>Password:</label><br>
     <input type="password" name="password" required><br><br>
-
-    <div style="display:flex;gap:8px;">
-      <button type="submit">Login</button>
-      <a href="{{ url_for('register') }}"><button type="button" style="background:gold;color:#0a1b3d;">Register</button></a>
-    </div>
-  </form>
-</div>
+    <button type="submit">Login</button>
+</form>
+<a href="{{ url_for('register') }}">No account? Register</a>
 {% endblock %}
