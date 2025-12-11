@@ -1,53 +1,49 @@
-{% extends "base.html" %}
-
+{% extends 'base.html' %}
 {% block content %}
 <h2>{{ store.name }} Dashboard</h2>
 
-<form class="mb-4" method="GET">
-    <input name="search" class="form-control" placeholder="Search items...">
+<form method="GET" class="mb-3">
+    <input type="text" name="search" class="form-control" placeholder="Search items" value="{{ request.args.get('search','') }}">
 </form>
 
-<h4>Inventory</h4>
+<a href="{{ url_for('add_item', store_id=store.id) }}" class="btn btn-add mb-3">Add Item</a>
 
 <table class="table table-bordered">
-    <thead>
+    <thead class="table-dark">
         <tr>
             <th>Name</th>
             <th>Stock</th>
             <th>Price</th>
-            <th>Daily Sales</th>
+            <th>Avg Daily Sales</th>
             <th>Days Left</th>
-            <th>Action</th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
-
         {% for item in items %}
-        <tr class="{% if item.stock < 5 %}low-stock{% endif %}">
+        <tr {% if item.days_left <=2 %}class="low-stock"{% endif %}>
             <td>{{ item.name }}</td>
             <td>{{ item.stock }}</td>
-            <td>${{ item.price }}</td>
+            <td>{{ item.price }}</td>
             <td>{{ item.avg_daily_sales }}</td>
             <td>{{ item.days_left }}</td>
             <td>
-                <a class="btn btn-primary btn-sm" href="{{ url_for('edit_item', item_id=item.id) }}">Edit</a>
+                <a href="{{ url_for('edit_item', item_id=item.id) }}" class="btn btn-sm btn-primary">Edit</a>
             </td>
         </tr>
         {% endfor %}
-
+        {% for s in suggestions %}
+        <tr class="table-warning">
+            <td>{{ s.name }}</td>
+            <td>{{ s.stock }}</td>
+            <td>{{ s.price }}</td>
+            <td>{{ s.avg_daily_sales }}</td>
+            <td>-</td>
+            <td>
+                <a href="{{ url_for('import_suggestion', store_id=store.id, item_name=s.name) }}" class="btn btn-sm btn-success">Add</a>
+            </td>
+        </tr>
+        {% endfor %}
     </tbody>
 </table>
-
-<a class="btn btn-add" href="{{ url_for('add_item', store_id=store.id) }}">Add New Item</a>
-
-{% if suggestions %}
-<h3 class="mt-4">Suggested Items</h3>
-{% for s in suggestions %}
-<div class="starter-suggestion mb-2">
-    <b>{{ s.name }}</b> — ₦{{ s.price }}
-    <a class="btn btn-success btn-sm float-end" href="{{ url_for('import_suggestion', store_id=store.id, item_name=s.name) }}">Add</a>
-</div>
-{% endfor %}
-{% endif %}
-
 {% endblock %}

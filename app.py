@@ -1,343 +1,224 @@
-# app.py — final StoreSenseAI backend (SQLite, deploy-ready)
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 
-# --- App & DB setup
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'replace_with_a_strong_secret'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///store.db'
+app.config['SECRET_KEY'] = 'your_secret_key_here'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///store_sense_ai.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
 
-# --- Login manager
+db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-# -------------------------
-# Models
-# -------------------------
+# --- Models ---
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    password_hash = db.Column(db.String(200), nullable=False)
+    username = db.Column(db.String(150), unique=True, nullable=False)
+    password = db.Column(db.String(150), nullable=False)
     stores = db.relationship('Store', backref='owner', lazy=True)
-
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
-
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
-
-class StoreType(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(120), nullable=False, unique=True)
-    default_products = db.relationship('DefaultProduct', backref='store_type', lazy=True)
 
 class Store(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(150), nullable=False)
-    region = db.Column(db.String(100), nullable=True)  # country/region field
+    store_type = db.Column(db.String(100), nullable=False)
+    region = db.Column(db.String(100), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    store_type_id = db.Column(db.Integer, db.ForeignKey('store_type.id'), nullable=True)
     items = db.relationship('Item', backref='store', lazy=True)
-    store_type = db.relationship('StoreType', primaryjoin='Store.store_type_id==StoreType.id', viewonly=True)
 
 class Item(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(200), nullable=False)
-    stock = db.Column(db.Integer, nullable=False, default=0)
-    price = db.Column(db.Float, nullable=False, default=0.0)
-    avg_daily_sales = db.Column(db.Float, nullable=False, default=1.0)
+    name = db.Column(db.String(150), nullable=False)
+    stock = db.Column(db.Integer, nullable=False)
+    price = db.Column(db.Float, nullable=False)
+    avg_daily_sales = db.Column(db.Float, nullable=False)
     store_id = db.Column(db.Integer, db.ForeignKey('store.id'), nullable=False)
 
-class DefaultProduct(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(200), nullable=False)
-    store_type_id = db.Column(db.Integer, db.ForeignKey('store_type.id'), nullable=False)
-    price = db.Column(db.Float, nullable=False, default=0.0)
-    avg_daily_sales = db.Column(db.Float, nullable=False, default=1.0)
-    starter_stock = db.Column(db.Integer, nullable=False, default=0)
-
-# -------------------------
-# Login loader
-# -------------------------
+# --- User loader ---
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# -------------------------
-# Auth routes
-# -------------------------
+# --- Routes ---
+@app.route('/')
+def home():
+    if current_user.is_authenticated:
+        return redirect(url_for('select_store'))
+    return redirect(url_for('login'))
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    if current_user.is_authenticated:
-        return redirect(url_for('home'))
     if request.method == 'POST':
-        username = (request.form.get('username') or '').strip()
-        password = (request.form.get('password') or '').strip()
-        store_name = (request.form.get('store_name') or '').strip()
-        region = (request.form.get('region') or '').strip()
-        store_type_id = request.form.get('store_type_id') or None
-        if not username or not password or not store_name:
-            flash('Username, password and store name are required.', 'danger')
-            return redirect(url_for('register'))
+        username = request.form['username']
+        password = generate_password_hash(request.form['password'], method='sha256')
+        store_name = request.form['store_name']
+        region = request.form['region']
+        store_type = request.form['store_type']
 
         if User.query.filter_by(username=username).first():
-            flash('Username already taken. Pick another.', 'warning')
-            return redirect(url_for('register'))
+            return "Username already exists."
 
-        user = User(username=username)
-        user.set_password(password)
-        db.session.add(user)
+        new_user = User(username=username, password=password)
+        db.session.add(new_user)
         db.session.commit()
 
-        # create store for user immediately
-        stype_id = int(store_type_id) if store_type_id else None
-        new_store = Store(name=store_name, region=region, user_id=user.id, store_type_id=stype_id)
+        # Create store
+        new_store = Store(name=store_name, store_type=store_type, region=region, owner=new_user)
         db.session.add(new_store)
         db.session.commit()
 
-        # import starter products for this store type if any
-        if stype_id:
-            default_products = DefaultProduct.query.filter_by(store_type_id=stype_id).all()
-            for dp in default_products:
-                it = Item(
-                    name=dp.name,
-                    stock=dp.starter_stock,
-                    price=dp.price,
-                    avg_daily_sales=dp.avg_daily_sales,
-                    store_id=new_store.id
-                )
-                db.session.add(it)
-            db.session.commit()
+        # Add default items
+        default_items = get_default_items(store_type)
+        for item in default_items:
+            db.session.add(Item(
+                name=item['name'],
+                stock=item['stock'],
+                price=item['price'],
+                avg_daily_sales=item['avg_daily_sales'],
+                store=new_store
+            ))
+        db.session.commit()
 
-        flash('Account and store created — please log in.', 'success')
-        return redirect(url_for('login'))
-    # GET
-    store_types = StoreType.query.order_by(StoreType.name).all()
-    return render_template('register.html', store_types=store_types)
+        login_user(new_user)
+        return redirect(url_for('select_store'))
 
-@app.route('/login', methods=['GET', 'POST'])
+    return render_template('register.html')
+
+def get_default_items(store_type):
+    items = []
+    types = {
+        'supermarket':[{'name':'Rice','stock':50,'price':2.0,'avg_daily_sales':5},
+                       {'name':'Beans','stock':40,'price':1.5,'avg_daily_sales':4},
+                       {'name':'Sugar','stock':30,'price':1.2,'avg_daily_sales':3}],
+        'pharmacy':[{'name':'Paracetamol','stock':100,'price':0.5,'avg_daily_sales':10},
+                    {'name':'Vitamin C','stock':80,'price':0.8,'avg_daily_sales':8}],
+        'electronics':[{'name':'Charger','stock':20,'price':10,'avg_daily_sales':2},
+                       {'name':'Earphones','stock':15,'price':15,'avg_daily_sales':1}],
+        'fashion':[{'name':'T-Shirt','stock':25,'price':12,'avg_daily_sales':3},
+                   {'name':'Jeans','stock':15,'price':25,'avg_daily_sales':2}],
+        'beverages':[{'name':'Coke','stock':50,'price':1.5,'avg_daily_sales':6},
+                     {'name':'Fanta','stock':40,'price':1.5,'avg_daily_sales':5}],
+        'hair':[{'name':'Shampoo','stock':30,'price':3,'avg_daily_sales':3},
+                {'name':'Hair Gel','stock':20,'price':4,'avg_daily_sales':2}],
+        'provision':[{'name':'Flour','stock':40,'price':2,'avg_daily_sales':4},
+                     {'name':'Cooking Oil','stock':30,'price':3,'avg_daily_sales':3}],
+        'fruits':[{'name':'Apple','stock':50,'price':1,'avg_daily_sales':5},
+                  {'name':'Banana','stock':60,'price':0.8,'avg_daily_sales':6}],
+        'restaurant':[{'name':'Burger','stock':20,'price':5,'avg_daily_sales':2},
+                      {'name':'Pizza','stock':15,'price':8,'avg_daily_sales':1}],
+        'wholesale':[{'name':'Soap','stock':100,'price':1,'avg_daily_sales':10},
+                     {'name':'Detergent','stock':80,'price':2,'avg_daily_sales':8}],
+    }
+    return types.get(store_type.lower(), [])
+
+@app.route('/login', methods=['GET','POST'])
 def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('home'))
-    if request.method == 'POST':
-        username = (request.form.get('username') or '').strip()
-        password = (request.form.get('password') or '').strip()
+    if request.method=='POST':
+        username = request.form['username']
+        password = request.form['password']
         user = User.query.filter_by(username=username).first()
-        if user and user.check_password(password):
-            login_user(user)
-            flash('Logged in successfully.', 'success')
-            return redirect(url_for('home'))
-        flash('Invalid username or password.', 'danger')
+        if not user or not check_password_hash(user.password,password):
+            return "Invalid credentials"
+        login_user(user)
+        return redirect(url_for('select_store'))
     return render_template('login.html')
 
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
-    flash('Logged out.', 'info')
     return redirect(url_for('login'))
 
-# -------------------------
-# App routes
-# -------------------------
-@app.route('/')
+@app.route('/stores')
 @login_required
-def home():
-    # Show user's stores and available store types
-    user_stores = Store.query.filter_by(user_id=current_user.id).all()
-    store_types = StoreType.query.order_by(StoreType.name).all()
-    return render_template('select_store.html', stores=user_stores, store_types=store_types)
+def select_store():
+    stores = Store.query.filter_by(user_id=current_user.id).all()
+    return render_template('select_store.html', stores=stores)
 
-@app.route('/create_store', methods=['POST'])
-@login_required
-def create_store():
-    name = (request.form.get('store_name') or '').strip()
-    region = (request.form.get('region') or '').strip()
-    store_type_id = request.form.get('store_type_id') or None
-    if not name:
-        flash('Store name is required.', 'danger')
-        return redirect(url_for('home'))
-    stype_id = int(store_type_id) if store_type_id else None
-    s = Store(name=name, region=region, user_id=current_user.id, store_type_id=stype_id)
-    db.session.add(s)
-    db.session.commit()
-
-    # import starter items for chosen type if present
-    if stype_id:
-        defaults = DefaultProduct.query.filter_by(store_type_id=stype_id).all()
-        for dp in defaults:
-            it = Item(
-                name=dp.name,
-                stock=dp.starter_stock,
-                price=dp.price,
-                avg_daily_sales=dp.avg_daily_sales,
-                store_id=s.id
-            )
-            db.session.add(it)
-        db.session.commit()
-
-    flash('Store created.', 'success')
-    return redirect(url_for('dashboard', store_id=s.id))
-
-@app.route('/store/<int:store_id>')
+@app.route('/dashboard/<int:store_id>', methods=['GET','POST'])
 @login_required
 def dashboard(store_id):
     store = Store.query.get_or_404(store_id)
-    if store.user_id != current_user.id:
-        flash('Access denied.', 'danger')
-        return redirect(url_for('home'))
+    if store.owner != current_user:
+        return "Unauthorized access"
 
-    search_query = (request.args.get('search') or '').strip()
-    if search_query:
-        items = Item.query.filter(Item.store_id == store.id, Item.name.ilike(f'%{search_query}%')).all()
-    else:
-        items = Item.query.filter_by(store_id=store.id).all()
-
-    # suggestions when search exists and user has no matching items
+    search_query = request.args.get('search', '').lower()
+    items = Item.query.filter_by(store_id=store.id).all()
     suggestions = []
+
     if search_query:
-        if store.store_type_id:
-            suggestions = DefaultProduct.query.filter(
-                DefaultProduct.store_type_id == store.store_type_id,
-                DefaultProduct.name.ilike(f'%{search_query}%')
-            ).all()
-        else:
-            suggestions = DefaultProduct.query.filter(DefaultProduct.name.ilike(f'%{search_query}%')).all()
+        items = [item for item in items if search_query in item.name.lower()]
+        if not items:
+            suggestions = get_default_items(store.store_type)
+            suggestions = [s for s in suggestions if search_query in s['name'].lower()]
 
-    # compute totals/predictions
-    total_value = sum([i.price * i.stock for i in items])
-    for i in items:
-        if i.avg_daily_sales and i.avg_daily_sales > 0:
-            i.days_to_sell_out = round(i.stock / i.avg_daily_sales, 1)
-        else:
-            i.days_to_sell_out = '∞'
-        i.low_stock = i.stock < 5
+    for item in items:
+        item.days_left = round(item.stock / max(item.avg_daily_sales,1),2)
 
-    return render_template('dashboard.html', store=store, items=items, total_value=total_value, suggestions=suggestions, search_query=search_query)
+    return render_template('dashboard.html', store=store, items=items, suggestions=suggestions)
 
-@app.route('/add_item/<int:store_id>', methods=['GET', 'POST'])
+@app.route('/add_item/<int:store_id>', methods=['GET','POST'])
 @login_required
 def add_item(store_id):
     store = Store.query.get_or_404(store_id)
-    if store.user_id != current_user.id:
-        flash('Access denied.', 'danger')
-        return redirect(url_for('home'))
-    if request.method == 'POST':
-        name = (request.form.get('name') or '').strip()
-        stock = int(request.form.get('stock') or 0)
-        price = float(request.form.get('price') or 0.0)
-        avg_daily_sales = float(request.form.get('avg_daily_sales') or 1.0)
-        it = Item(name=name, stock=stock, price=price, avg_daily_sales=avg_daily_sales, store_id=store.id)
-        db.session.add(it)
+    if store.owner != current_user:
+        return "Unauthorized access"
+
+    if request.method=='POST':
+        name = request.form['name']
+        stock = int(request.form['stock'])
+        price = float(request.form['price'])
+        avg_daily_sales = float(request.form['avg_daily_sales'])
+        new_item = Item(name=name, stock=stock, price=price, avg_daily_sales=avg_daily_sales, store=store)
+        db.session.add(new_item)
         db.session.commit()
-        flash('Item added.', 'success')
         return redirect(url_for('dashboard', store_id=store.id))
-    return render_template('add_item.html', store=store)
+    return render_template('add_item.html')
 
-@app.route('/import_suggestion/<int:store_id>/<int:default_id>', methods=['POST'])
-@login_required
-def import_suggestion(store_id, default_id):
-    store = Store.query.get_or_404(store_id)
-    if store.user_id != current_user.id:
-        flash('Access denied.', 'danger')
-        return redirect(url_for('home'))
-    dp = DefaultProduct.query.get_or_404(default_id)
-    new_item = Item(
-        name=dp.name,
-        stock=dp.starter_stock,
-        price=dp.price,
-        avg_daily_sales=dp.avg_daily_sales,
-        store_id=store.id
-    )
-    db.session.add(new_item)
-    db.session.commit()
-    flash(f'Imported "{dp.name}" to your store. Edit stock and price as needed.', 'success')
-    return redirect(url_for('dashboard', store_id=store.id))
-
-@app.route('/edit_item/<int:item_id>', methods=['GET', 'POST'])
+@app.route('/edit_item/<int:item_id>', methods=['GET','POST'])
 @login_required
 def edit_item(item_id):
     item = Item.query.get_or_404(item_id)
-    store = item.store
-    if store.user_id != current_user.id:
-        flash('Access denied.', 'danger')
-        return redirect(url_for('home'))
-    if request.method == 'POST':
-        item.name = (request.form.get('name') or '').strip()
-        item.stock = int(request.form.get('stock') or 0)
-        item.price = float(request.form.get('price') or 0.0)
-        item.avg_daily_sales = float(request.form.get('avg_daily_sales') or 1.0)
+    if item.store.owner != current_user:
+        return "Unauthorized access"
+
+    if request.method=='POST':
+        item.name = request.form['name']
+        item.stock = int(request.form['stock'])
+        item.price = float(request.form['price'])
+        item.avg_daily_sales = float(request.form['avg_daily_sales'])
         db.session.commit()
-        flash('Item updated.', 'success')
-        return redirect(url_for('dashboard', store_id=store.id))
+        return redirect(url_for('dashboard', store_id=item.store.id))
+
     return render_template('edit_item.html', item=item)
 
-@app.route('/delete_item/<int:item_id>', methods=['POST'])
+@app.route('/import_suggestion/<int:store_id>/<item_name>')
 @login_required
-def delete_item(item_id):
-    item = Item.query.get_or_404(item_id)
-    store = item.store
-    if store.user_id != current_user.id:
-        flash('Access denied.', 'danger')
-        return redirect(url_for('home'))
-    db.session.delete(item)
-    db.session.commit()
-    flash('Item removed.', 'info')
+def import_suggestion(store_id, item_name):
+    store = Store.query.get_or_404(store_id)
+    if store.owner != current_user:
+        return "Unauthorized access"
+
+    suggestions = get_default_items(store.store_type)
+    for s in suggestions:
+        if s['name'] == item_name:
+            new_item = Item(
+                name=s['name'],
+                stock=s['stock'],
+                price=s['price'],
+                avg_daily_sales=s['avg_daily_sales'],
+                store=store
+            )
+            db.session.add(new_item)
+            db.session.commit()
+            break
     return redirect(url_for('dashboard', store_id=store.id))
 
-# -------------------------
-# Seed default store types & default products (runs once)
-# -------------------------
-def seed_defaults():
-    if StoreType.query.count() == 0:
-        types = [
-            "Supermarket","Pharmacy","Electronics Store","Clothing & Fashion Store",
-            "Bakery","Provision Store","Cosmetics & Beauty Store"
-        ]
-        for t in types:
-            db.session.add(StoreType(name=t))
-        db.session.commit()
-
-    if DefaultProduct.query.count() == 0:
-        # mapping: (product name, store_type_name, price, avg_daily_sales, starter_stock)
-        suggestions = [
-            ("Bread","Supermarket",100.0,8,20),
-            ("Eggs (6)","Supermarket",120.0,6,30),
-            ("Rice 5kg","Supermarket",4500.0,4,20),
-            ("Sugar 2kg","Supermarket",900.0,3,10),
-            ("Paracetamol","Pharmacy",200.0,2,15),
-            ("Vitamin C","Pharmacy",800.0,1,10),
-            ("Phone Charger","Electronics Store",1500.0,3,10),
-            ("Earbuds","Electronics Store",4000.0,1,5),
-            ("T-Shirt","Clothing & Fashion Store",2500.0,0.5,10),
-            ("Jeans","Clothing & Fashion Store",5000.0,0.2,5),
-            ("Loaf Bread","Bakery",200.0,10,25),
-            ("Cake Slice","Bakery",600.0,2,10),
-            ("Cooking Oil 2L","Provision Store",2000.0,2,12),
-            ("Milk 1L","Provision Store",500.0,6,15),
-            ("Body Lotion","Cosmetics & Beauty Store",1200.0,1,8),
-            ("Face Cream","Cosmetics & Beauty Store",1800.0,0.5,5),
-        ]
-        for name, st_name, price, ads, stock in suggestions:
-            st = StoreType.query.filter_by(name=st_name).first()
-            if st:
-                dp = DefaultProduct(name=name, store_type_id=st.id, price=price, avg_daily_sales=ads, starter_stock=stock)
-                db.session.add(dp)
-        db.session.commit()
-
-with app.app_context():
+# --- Run app ---
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
     db.create_all()
-    seed_defaults()
-
-# -------------------------
-# Run (Render port compatibility)
-# -------------------------
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host="0.0.0.0", port=port)

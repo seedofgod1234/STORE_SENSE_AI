@@ -1,14 +1,15 @@
-{% extends "base.html" %}
-
+{% extends 'base.html' %}
 {% block content %}
-<h2>My Stores</h2>
-
-{% for store in stores %}
-<div class="card p-3 mb-3">
-    <h4>{{ store.name }}</h4>
-    <p>{{ store.region }} — {{ store.store_type }}</p>
-    <a class="btn btn-success" href="{{ url_for('dashboard', store_id=store.id) }}">Open Store</a>
-</div>
-{% endfor %}
-
+<h2>Select Store</h2>
+<form method="GET" action="{{ url_for('dashboard', store_id=0) }}">
+    <div class="mb-3">
+        <label>Choose your store</label>
+        <select name="store_id" class="form-select" required>
+            {% for store in stores %}
+            <option value="{{ store.id }}">{{ store.name }} ({{ store.store_type }})</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit" class="btn btn-add">Go to Dashboard</button>
+</form>
 {% endblock %}

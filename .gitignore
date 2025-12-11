@@ -5,5 +5,5 @@ instance/
 *.pyd
 .env
 venv/
-.env/
 .DS_Store
+store_sense_ai.db
