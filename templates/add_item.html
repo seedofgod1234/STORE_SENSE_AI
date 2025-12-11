@@ -1,25 +1,30 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
 {% block content %}
-<h2>Add Item to {{ store.name }}</h2>
+<h2>Add Item</h2>
 
 <form method="POST">
     <div class="mb-3">
-        <label class="form-label">Item Name</label>
-        <input type="text" name="name" class="form-control" required>
+        <label>Name</label>
+        <input class="form-control" name="name" required>
     </div>
+
     <div class="mb-3">
-        <label class="form-label">Stock</label>
-        <input type="number" name="stock" class="form-control" required>
+        <label>Stock</label>
+        <input type="number" class="form-control" name="stock" required>
     </div>
+
     <div class="mb-3">
-        <label class="form-label">Price</label>
-        <input type="number" step="0.01" name="price" class="form-control" required>
+        <label>Price</label>
+        <input type="number" class="form-control" name="price" required>
     </div>
+
     <div class="mb-3">
-        <label class="form-label">Average Daily Sales</label>
-        <input type="number" step="0.1" name="avg_daily_sales" class="form-control" value="1.0">
+        <label>Avg Daily Sales</label>
+        <input type="number" class="form-control" name="avg_daily_sales" required>
     </div>
-    <button type="submit" class="btn btn-add">Add Item</button>
+
+    <button class="btn btn-primary">Save</button>
 </form>
+
 {% endblock %}

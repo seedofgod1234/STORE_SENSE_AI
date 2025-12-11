@@ -1,27 +1,14 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
 {% block content %}
-<h2>Select Store</h2>
+<h2>My Stores</h2>
 
-<form method="POST" action="{{ url_for('select_store') }}">
-    <div class="mb-3">
-        <label class="form-label">Choose your store</label>
-        <select name="store_id" class="form-select">
-            {% for store in stores %}
-            <option value="{{ store.id }}">{{ store.name }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <button type="submit" class="btn btn-add">Go to Dashboard</button>
-</form>
+{% for store in stores %}
+<div class="card p-3 mb-3">
+    <h4>{{ store.name }}</h4>
+    <p>{{ store.region }} — {{ store.store_type }}</p>
+    <a class="btn btn-success" href="{{ url_for('dashboard', store_id=store.id) }}">Open Store</a>
+</div>
+{% endfor %}
 
-<hr>
-
-<h3>Add New Store</h3>
-<form method="POST" action="{{ url_for('add_store') }}">
-    <div class="mb-3">
-        <input type="text" name="store_name" class="form-control" placeholder="Enter new store name" required>
-    </div>
-    <button type="submit" class="btn btn-add">Add Store</button>
-</form>
 {% endblock %}

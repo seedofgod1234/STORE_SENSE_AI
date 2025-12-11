@@ -3,9 +3,7 @@ instance/
 *.pyc
 *.pyo
 *.pyd
-env/
+.env
 venv/
-*.db
-*.sqlite
+.env/
 .DS_Store
-*.log

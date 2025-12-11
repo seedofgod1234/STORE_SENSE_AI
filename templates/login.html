@@ -1,17 +1,23 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
 {% block content %}
-<h2>Login</h2>
+<h2>Login to Your StoreSenseAI</h2>
 
 <form method="POST">
     <div class="mb-3">
-        <label class="form-label">Username</label>
-        <input type="text" name="username" class="form-control" required>
+        <label>Username</label>
+        <input class="form-control" name="username" required>
     </div>
+
     <div class="mb-3">
-        <label class="form-label">Password</label>
-        <input type="password" name="password" class="form-control" required>
+        <label>Password</label>
+        <input type="password" class="form-control" name="password" required>
     </div>
-    <button type="submit" class="btn btn-add">Login</button>
+
+    <button class="btn btn-primary">Login</button>
 </form>
+
+<p class="mt-3">
+    No account? <a href="{{ url_for('register') }}">Create one</a>
+</p>
 {% endblock %}
