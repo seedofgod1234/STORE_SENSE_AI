@@ -1,50 +1,41 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h2 class="mb-4">Dashboard</h2>
+<h2>Dashboard: {{ store.name }}</h2>
 
-<div class="row mb-3">
-  <div class="col-md-4">
-    <form method="get" action="{{ url_for('dashboard') }}">
-      <input type="text" name="search_item" class="form-control mb-2" placeholder="Search Item" value="{{ search_item }}">
-      <input type="text" name="search_store" class="form-control mb-2" placeholder="Search Store" value="{{ search_store }}">
-      <button type="submit" class="btn btn-add w-100">Search</button>
-    </form>
-  </div>
-  <div class="col-md-8 text-end">
-    <h5>Total Inventory Value: ${{ total_value }}</h5>
-    <a href="{{ url_for('add_item') }}" class="btn btn-add">Add New Item</a>
-  </div>
+<p class="total-value">Total Inventory Value: ${{ total_value }}</p>
+
+<div class="mb-3">
+    <a href="{{ url_for('add_item', store_id=store.id) }}" class="btn btn-add mb-3">Add New Item</a>
 </div>
+
+<form method="GET" class="mb-3">
+    <input type="text" name="search" class="form-control" placeholder="Search items..." value="{{ request.args.get('search','') }}">
+    <button type="submit" class="btn btn-add mt-2">Search</button>
+</form>
 
 <table class="table table-striped">
     <thead>
         <tr>
             <th>Name</th>
-            <th>Category</th>
-            <th>Store</th>
-            <th>Price</th>
             <th>Stock</th>
+            <th>Price</th>
             <th>Days to Sell Out</th>
             <th>Actions</th>
         </tr>
     </thead>
     <tbody>
         {% for item in items %}
-        <tr class="{% if item.low_stock_alert %}low-stock{% endif %}">
-            <td>{{ item.name }}</td>
-            <td>{{ item.category }}</td>
-            <td>{{ item.store_name }}</td>
-            <td>${{ item.price }}</td>
-            <td>{{ item.stock }}</td>
-            <td>{{ item.days_to_sell_out }}</td>
-            <td>
-                <a href="{{ url_for('edit_item', item_id=item.id) }}" class="btn btn-sm btn-primary">Edit</a>
-                <form action="{{ url_for('delete_item', item_id=item.id) }}" method="POST" style="display:inline;">
-                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                </form>
-            </td>
-        </tr>
+            <tr class="{% if item.low_stock %}low-stock{% endif %}">
+                <td>{{ item.name }}</td>
+                <td>{{ item.stock }}</td>
+                <td>${{ item.price }}</td>
+                <td>{{ item.days_to_sell_out }}</td>
+                <td>
+                    <a href="{{ url_for('edit_item', item_id=item.id) }}" class="btn btn-sm btn-primary">Edit</a>
+                    <a href="{{ url_for('delete_item', item_id=item.id) }}" class="btn btn-sm btn-danger">Delete</a>
+                </td>
+            </tr>
         {% endfor %}
     </tbody>
 </table>

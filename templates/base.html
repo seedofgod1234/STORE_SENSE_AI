@@ -5,42 +5,23 @@
     <title>StoreSenseAI</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f7f7f7; }
-        .navbar { background-color: #1a3d7c; }
-        .navbar-brand, .nav-link { color: #ffd700 !important; }
-        .btn-add { background-color: #ffd700; color: #1a3d7c; font-weight: bold; }
-        .low-stock { background-color: #ffcccc !important; }
-        .table thead { background-color: #1a3d7c; color: #ffd700; }
+        body { background-color: #f0f4f8; font-family: Arial, sans-serif; }
+        .btn-add { background-color: #0d6efd; color: #fff; }
+        .btn-add:hover { background-color: #0b5ed7; }
+        .low-stock { background-color: #ffc107 !important; }
+        .table thead { background-color: #0d6efd; color: #fff; }
+        h2, h3 { color: #0d6efd; }
+        .total-value { font-weight: bold; color: #198754; }
     </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
   <div class="container-fluid">
-    <a class="navbar-brand" href="{{ url_for('dashboard') }}">StoreSenseAI</a>
-    <div class="collapse navbar-collapse">
-      <ul class="navbar-nav ms-auto">
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('add_item') }}">Add Item</a>
-        </li>
-      </ul>
-    </div>
+    <a class="navbar-brand" href="{{ url_for('home') }}">StoreSenseAI</a>
   </div>
 </nav>
-
-<div class="container mt-4">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+<div class="container">
     {% block content %}{% endblock %}
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
