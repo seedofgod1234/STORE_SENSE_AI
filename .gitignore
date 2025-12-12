@@ -1,31 +1,9 @@
-# Byte-compiled / optimized / DLL files
 __pycache__/
-*.py[cod]
-*$py.class
-
-# Virtual environment
+*.pyc
+*.pyo
 venv/
-ENV/
-env/
-.venv/
-
-# SQLite database
+.env
 instance/
 *.db
-*.sqlite
-
-# OS files
+store_sense_ai.db
 .DS_Store
-Thumbs.db
-
-# Python cache and logs
-*.log
-*.pot
-*.pyc
-
-# Flask specific
-*.pid
-
-# Environment variables
-.env
-*.env

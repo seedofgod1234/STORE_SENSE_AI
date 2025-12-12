@@ -5,21 +5,20 @@
   <title>StoreSenseAI</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    .btn-add { background:#0d6efd; color:#fff; }
-    .low-stock { background:#fff3cd; }
+    .btn-add{background:#0d6efd;color:#fff}
+    .low-stock{background:#fff3cd}
   </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+<nav class="navbar navbar-dark bg-primary">
   <div class="container-fluid">
-    <a class="navbar-brand" href="{{ url_for('dashboard') }}">StoreSenseAI</a>
-    <div class="d-flex">
+    <a class="navbar-brand" href="{{ url_for('stores') }}">StoreSenseAI</a>
+    <div>
       {% if current_user.is_authenticated %}
-        <span class="text-light me-3">Hi, {{ current_user.username }}</span>
-        <a class="btn btn-outline-light me-2" href="{{ url_for('logout') }}">Logout</a>
+        <span class="text-light me-3">{{ current_user.username }}</span>
+        <a class="btn btn-outline-light btn-sm" href="{{ url_for('logout') }}">Logout</a>
       {% else %}
-        <a class="btn btn-outline-light me-2" href="{{ url_for('login') }}">Login</a>
-        <a class="btn btn-outline-light" href="{{ url_for('register') }}">Register</a>
+        <a class="btn btn-outline-light btn-sm" href="{{ url_for('login') }}">Login</a>
       {% endif %}
     </div>
   </div>
@@ -27,10 +26,8 @@
 <div class="container mt-4">
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
-      {% for category, msg in messages %}
-        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-          {{ msg }} <button class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
+      {% for cat,msg in messages %}
+        <div class="alert alert-{{ cat }} alert-dismissible fade show" role="alert">{{ msg }}<button class="btn-close" data-bs-dismiss="alert"></button></div>
       {% endfor %}
     {% endif %}
   {% endwith %}

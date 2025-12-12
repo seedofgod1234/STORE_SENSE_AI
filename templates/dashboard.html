@@ -1,34 +1,60 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>{{ store_name or "My Store" }} — Dashboard</h2>
-<p><strong>Total inventory value:</strong> ${{ "%.2f"|format(total_value) }}</p>
+<h2>{{ store.name }} <small class="text-muted">({{ store.region or 'No region' }})</small></h2>
+<p><strong>Total inventory value:</strong> ${{ '%.2f'|format(total_value) }}</p>
+
+<div class="mb-3">
+  <a class="btn btn-add" href="{{ url_for('add_item', store_id=store.id) }}">Add Item</a>
+  <a class="btn btn-outline-secondary" href="{{ url_for('stores') }}">Back to stores</a>
+</div>
 
 <form method="GET" class="mb-3">
   <div class="input-group">
-    <input class="form-control" name="search" placeholder="Search items..." value="{{ q }}">
+    <input class="form-control" name="search" placeholder="Search items or suggestions..." value="{{ search }}">
     <button class="btn btn-add">Search</button>
   </div>
 </form>
 
-<a class="btn btn-add mb-3" href="{{ url_for('add_item') }}">Add Item</a>
-
+{% if items %}
 <table class="table">
-  <thead><tr><th>Name</th><th>Stock</th><th>Price</th><th>Days to sell out</th><th>Actions</th></tr></thead>
+  <thead><tr><th>Name</th><th>Stock</th><th>Price</th><th>Days to sell out</th><th>Reorder</th><th>Actions</th></tr></thead>
   <tbody>
-    {% for item in items %}
-      <tr {% if item.low_stock %}class="low-stock"{% endif %}>
-        <td>{{ item.name }}</td>
-        <td>{{ item.stock }}</td>
-        <td>{{ "%.2f"|format(item.price) }}</td>
-        <td>{{ item.days_to_sell_out }}</td>
-        <td>
-          <a class="btn btn-sm btn-primary" href="{{ url_for('edit_item', item_id=item.id) }}">Edit</a>
-          <form method="POST" action="{{ url_for('delete_item', item_id=item.id) }}" style="display:inline">
-            <button class="btn btn-sm btn-danger">Delete</button>
-          </form>
-        </td>
-      </tr>
+    {% for it in items %}
+    <tr {% if it.low_stock %}class="low-stock"{% endif %}>
+      <td>{{ it.name }}</td>
+      <td>{{ it.stock }}</td>
+      <td>{{ '%.2f'|format(it.price) }}</td>
+      <td>{{ it.days_to_sell_out }}</td>
+      <td>{% if it.reorder_amount %}{{ it.reorder_amount }}{% else %}-{% endif %}</td>
+      <td>
+        <a class="btn btn-sm btn-primary" href="{{ url_for('edit_item', item_id=it.id) }}">Edit</a>
+        <form method="POST" action="{{ url_for('delete_item', item_id=it.id) }}" style="display:inline">
+          <button class="btn btn-sm btn-danger">Delete</button>
+        </form>
+      </td>
+    </tr>
     {% endfor %}
   </tbody>
 </table>
+{% else %}
+<p>No items found in this store.</p>
+{% endif %}
+
+{% if suggestions %}
+<hr>
+<h5>Suggestions (matching your search)</h5>
+<div class="list-group">
+  {% for s in suggestions %}
+  <div class="list-group-item d-flex justify-content-between align-items-center">
+    <div>
+      <strong>{{ s.name }}</strong><br><small class="text-muted">Default price: {{ '%.2f'|format(s.price) }}</small>
+    </div>
+    <form method="POST" action="{{ url_for('import_default', store_id=store.id, default_id=s.id) }}">
+      <button class="btn btn-sm btn-add">Add to my store</button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
 {% endblock %}

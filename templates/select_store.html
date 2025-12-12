@@ -1,15 +1,46 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% block content %}
-<h2>Select Store</h2>
-<form method="GET" action="{{ url_for('dashboard', store_id=0) }}">
-    <div class="mb-3">
-        <label>Choose your store</label>
-        <select name="store_id" class="form-select" required>
-            {% for store in stores %}
-            <option value="{{ store.id }}">{{ store.name }} ({{ store.store_type }})</option>
-            {% endfor %}
-        </select>
-    </div>
-    <button type="submit" class="btn btn-add">Go to Dashboard</button>
+<h2>My Stores</h2>
+
+<form method="GET" class="mb-3">
+  <div class="input-group">
+    <input class="form-control" name="q" placeholder="Search my stores..." value="{{ q }}">
+    <button class="btn btn-add">Search</button>
+  </div>
 </form>
+
+<div class="row">
+  <div class="col-md-6">
+    <ul class="list-group">
+      {% for s in stores %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <div>
+          <strong>{{ s.name }}</strong><br><small class="text-muted">{{ s.region or 'No region' }} — {{ s.store_type.name if s.store_type else 'Unknown type' }}</small>
+        </div>
+        <div>
+          <a class="btn btn-sm btn-primary me-2" href="{{ url_for('dashboard', store_id=s.id) }}">Open</a>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="col-md-6">
+    <h5>Create a new store</h5>
+    <form method="POST" action="{{ url_for('create_store') }}">
+      <div class="mb-3"><input class="form-control" name="store_name" placeholder="Store name" required></div>
+      <div class="mb-3"><input class="form-control" name="region" placeholder="Region / Country"></div>
+      <div class="mb-3">
+        <select class="form-select" name="store_type_id">
+          <option value="">(Optional) select type</option>
+          {% for st in store_types %}
+            <option value="{{ st.id }}">{{ st.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button class="btn btn-add">Create Store</button>
+    </form>
+  </div>
+</div>
+
 {% endblock %}
