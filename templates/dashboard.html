@@ -1,49 +1,34 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% block content %}
-<h2>{{ store.name }} Dashboard</h2>
+<h2>{{ store_name or "My Store" }} — Dashboard</h2>
+<p><strong>Total inventory value:</strong> ${{ "%.2f"|format(total_value) }}</p>
 
 <form method="GET" class="mb-3">
-    <input type="text" name="search" class="form-control" placeholder="Search items" value="{{ request.args.get('search','') }}">
+  <div class="input-group">
+    <input class="form-control" name="search" placeholder="Search items..." value="{{ q }}">
+    <button class="btn btn-add">Search</button>
+  </div>
 </form>
 
-<a href="{{ url_for('add_item', store_id=store.id) }}" class="btn btn-add mb-3">Add Item</a>
+<a class="btn btn-add mb-3" href="{{ url_for('add_item') }}">Add Item</a>
 
-<table class="table table-bordered">
-    <thead class="table-dark">
-        <tr>
-            <th>Name</th>
-            <th>Stock</th>
-            <th>Price</th>
-            <th>Avg Daily Sales</th>
-            <th>Days Left</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for item in items %}
-        <tr {% if item.days_left <=2 %}class="low-stock"{% endif %}>
-            <td>{{ item.name }}</td>
-            <td>{{ item.stock }}</td>
-            <td>{{ item.price }}</td>
-            <td>{{ item.avg_daily_sales }}</td>
-            <td>{{ item.days_left }}</td>
-            <td>
-                <a href="{{ url_for('edit_item', item_id=item.id) }}" class="btn btn-sm btn-primary">Edit</a>
-            </td>
-        </tr>
-        {% endfor %}
-        {% for s in suggestions %}
-        <tr class="table-warning">
-            <td>{{ s.name }}</td>
-            <td>{{ s.stock }}</td>
-            <td>{{ s.price }}</td>
-            <td>{{ s.avg_daily_sales }}</td>
-            <td>-</td>
-            <td>
-                <a href="{{ url_for('import_suggestion', store_id=store.id, item_name=s.name) }}" class="btn btn-sm btn-success">Add</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
+<table class="table">
+  <thead><tr><th>Name</th><th>Stock</th><th>Price</th><th>Days to sell out</th><th>Actions</th></tr></thead>
+  <tbody>
+    {% for item in items %}
+      <tr {% if item.low_stock %}class="low-stock"{% endif %}>
+        <td>{{ item.name }}</td>
+        <td>{{ item.stock }}</td>
+        <td>{{ "%.2f"|format(item.price) }}</td>
+        <td>{{ item.days_to_sell_out }}</td>
+        <td>
+          <a class="btn btn-sm btn-primary" href="{{ url_for('edit_item', item_id=item.id) }}">Edit</a>
+          <form method="POST" action="{{ url_for('delete_item', item_id=item.id) }}" style="display:inline">
+            <button class="btn btn-sm btn-danger">Delete</button>
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
 </table>
 {% endblock %}

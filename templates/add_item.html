@@ -1,23 +1,11 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% block content %}
-<h2>Add Item</h2>
+<h2>Add item</h2>
 <form method="POST">
-    <div class="mb-3">
-        <label>Name</label>
-        <input type="text" name="name" class="form-control" required>
-    </div>
-    <div class="mb-3">
-        <label>Stock</label>
-        <input type="number" name="stock" class="form-control" required>
-    </div>
-    <div class="mb-3">
-        <label>Price</label>
-        <input type="number" step="0.01" name="price" class="form-control" required>
-    </div>
-    <div class="mb-3">
-        <label>Average Daily Sales</label>
-        <input type="number" step="0.01" name="avg_daily_sales" class="form-control" required>
-    </div>
-    <button type="submit" class="btn btn-add">Add Item</button>
+  <div class="mb-3"><label>Name</label><input class="form-control" name="name" required></div>
+  <div class="mb-3"><label>Stock</label><input type="number" class="form-control" name="stock" required></div>
+  <div class="mb-3"><label>Price</label><input type="number" step="0.01" class="form-control" name="price" required></div>
+  <div class="mb-3"><label>Average daily sales</label><input type="number" step="0.1" class="form-control" name="avg_daily_sales" value="1.0" required></div>
+  <button class="btn btn-add">Add</button>
 </form>
 {% endblock %}

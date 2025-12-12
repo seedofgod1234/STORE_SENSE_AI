@@ -1,9 +1,36 @@
+# Python cache
 __pycache__/
-instance/
 *.pyc
 *.pyo
 *.pyd
-.env
+
+# Virtual environment
 venv/
+env/
+ENV/
+
+# Environment variables
+*.env
+
+# Flask instance folder
+instance/
+
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+
+# OS files
 .DS_Store
-store_sense_ai.db
+Thumbs.db
+
+# Logs
+*.log
+
+# Uploaded files (if any)
+uploads/
+
+# Compiled files
+*.sqlite3
+*.db
