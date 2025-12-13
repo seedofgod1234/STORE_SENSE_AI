@@ -1,10 +1,38 @@
-{% extends "base.html" %}
-{% block content %}
-<h2>Login</h2>
-<form method="POST">
-  <div class="mb-3"><label>Username</label><input class="form-control" name="username" required></div>
-  <div class="mb-3"><label>Password</label><input type="password" class="form-control" name="password" required></div>
-  <button class="btn btn-add">Login</button>
-</form>
-<p class="mt-2">No account? <a href="{{ url_for('register') }}">Register</a></p>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>StoreSense AI – Login</title>
+</head>
+<body>
+    <h2>Login / Create Store</h2>
+
+    <form method="POST" action="{{ url_for('login') }}">
+        <div>
+            <label>Username</label><br>
+            <input type="text" name="username" required>
+        </div>
+
+        <br>
+
+        <div>
+            <label>Store Name</label><br>
+            <input type="text" name="store_name" required>
+        </div>
+
+        <br>
+
+        <button type="submit">Enter Dashboard</button>
+    </form>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul>
+          {% for category, message in messages %}
+            <li><strong>{{ message }}</strong></li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+</body>
+</html>
